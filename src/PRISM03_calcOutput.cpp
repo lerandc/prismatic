@@ -25,7 +25,6 @@
 #include "utility.h"
 #include "WorkDispatcher.h"
 #include "ArrayND.h"
-#include "fileIO.h"
 
 #ifdef PRISMATIC_BUILDING_GUI
 #include "prism_progressbar.h"
@@ -62,50 +61,45 @@ Array2D<PRISMATIC_FLOAT_PRECISION> array2D_subset(const Array2D<PRISMATIC_FLOAT_
 
 void setupCoordinates_2(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
 {
-	std::vector<PRISMATIC_FLOAT_PRECISION> xp_d;
-	std::vector<PRISMATIC_FLOAT_PRECISION> yp_d;
+	Array1D<PRISMATIC_FLOAT_PRECISION> xR = zeros_ND<1, PRISMATIC_FLOAT_PRECISION>({{2}});
+	xR[0] = pars.scanWindowXMin * pars.tiledCellDim[2];
+	xR[1] = pars.scanWindowXMax * pars.tiledCellDim[2];
+	Array1D<PRISMATIC_FLOAT_PRECISION> yR = zeros_ND<1, PRISMATIC_FLOAT_PRECISION>({{2}});
+	yR[0] = pars.scanWindowYMin * pars.tiledCellDim[1];
+	yR[1] = pars.scanWindowYMax * pars.tiledCellDim[1];
 
-	if(pars.meta.arbitraryProbes)
+	PRISMATIC_FLOAT_PRECISION probeStepX;
+	PRISMATIC_FLOAT_PRECISION probeStepY;
+	if (pars.meta.nyquistSampling)
 	{
-		xp_d = pars.meta.probes_x;
-		yp_d = pars.meta.probes_y;
-		pars.numXprobes = xp_d.size();
-		pars.numYprobes = 1;
-		pars.numProbes = xp_d.size();
+		int numX = nyquistProbes(pars, 2); //x is dim 2
+		int numY = nyquistProbes(pars, 1); //y is dim 1
+		probeStepX = pars.tiledCellDim[2] / numX;
+		probeStepY = pars.tiledCellDim[1] / numY;
 	}
 	else
 	{
-		Array1D<PRISMATIC_FLOAT_PRECISION> xR = zeros_ND<1, PRISMATIC_FLOAT_PRECISION>({{2}});
-		xR[0] = pars.scanWindowXMin * pars.tiledCellDim[2];
-		xR[1] = pars.scanWindowXMax * pars.tiledCellDim[2];
-		Array1D<PRISMATIC_FLOAT_PRECISION> yR = zeros_ND<1, PRISMATIC_FLOAT_PRECISION>({{2}});
-		yR[0] = pars.scanWindowYMin * pars.tiledCellDim[1];
-		yR[1] = pars.scanWindowYMax * pars.tiledCellDim[1];
-
-		PRISMATIC_FLOAT_PRECISION probeStepX;
-		PRISMATIC_FLOAT_PRECISION probeStepY;
-		if (pars.meta.nyquistSampling)
-		{
-			int numX = nyquistProbes(pars, 2); //x is dim 2
-			int numY = nyquistProbes(pars, 1); //y is dim 1
-			probeStepX = pars.tiledCellDim[2] / numX;
-			probeStepY = pars.tiledCellDim[1] / numY;
-		}
-		else
-		{
-			probeStepX = pars.meta.probeStepX;
-			probeStepY = pars.meta.probeStepY;
-		}
-
-		xp_d = vecFromRange(xR[0], probeStepX, xR[1]);
-		yp_d = vecFromRange(yR[0], probeStepY, yR[1]);
-		pars.numXprobes = xp_d.size();
-		pars.numYprobes = yp_d.size();
-		pars.numProbes = xp_d.size()*yp_d.size();
+		probeStepX = pars.meta.probeStepX;
+		probeStepY = pars.meta.probeStepY;
 	}
+
+	vector<PRISMATIC_FLOAT_PRECISION> xp_d = vecFromRange(xR[0], probeStepX, xR[1]);
+	vector<PRISMATIC_FLOAT_PRECISION> yp_d = vecFromRange(yR[0], probeStepY, yR[1]);
+	//		vector<PRISMATIC_FLOAT_PRECISION> xp_d = vecFromRange(xR[0] + pars.meta.probeStepX / 2, pars.meta.probeStepX, xR[1] - pars.meta.probeStepX / 2);
+	//		vector<PRISMATIC_FLOAT_PRECISION> yp_d = vecFromRange(yR[0] + pars.meta.probeStepY / 2, pars.meta.probeStepY, yR[1] - pars.meta.probeStepY / 2);
 
 	Array1D<PRISMATIC_FLOAT_PRECISION> xp(xp_d, {{xp_d.size()}});
 	Array1D<PRISMATIC_FLOAT_PRECISION> yp(yp_d, {{yp_d.size()}});
+
+	/* 
+		if(pars.meta.saveRealSpaceCoords){
+			pair< Array2D<PRISMATIC_FLOAT_PRECISION>, Array2D<PRISMATIC_FLOAT_PRECISION> > real_mesh = meshgrid(xp,yp);
+			std::string x_name = pars.meta.outputFolder + "real_space_x.mrc";
+			std::string y_name = pars.meta.outputFolder + "real_space_y.mrc";
+			real_mesh.first.toMRC_f(x_name.c_str());
+			real_mesh.second.toMRC_f(y_name.c_str());
+		}
+		*/
 
 	pars.xp = xp;
 	pars.yp = yp;
@@ -165,36 +159,14 @@ void setupBeams_2(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
 void createStack_integrate(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
 {
 	// create output of a size corresponding to 3D mode (integration)
-	pars.numLayers = 1;
-	if(pars.meta.saveComplexOutputWave)
-	{
-		pars.output_c = zeros_ND<4, std::complex<PRISMATIC_FLOAT_PRECISION>>({{1, pars.numYprobes, pars.numXprobes, pars.Ndet}});
-	}
-	else
-	{
-		pars.output = zeros_ND<4, PRISMATIC_FLOAT_PRECISION>({{1, pars.numYprobes, pars.numXprobes, pars.Ndet}});
-		if (pars.meta.saveDPC_CoM)
-			pars.DPC_CoM = zeros_ND<4, PRISMATIC_FLOAT_PRECISION>({{1, pars.numYprobes, pars.numXprobes, 2}});
-	}
-	
-	std::vector<PRISMATIC_FLOAT_PRECISION> depths(1);
-	depths[0] = pars.numPlanes*pars.meta.sliceThickness;
-	pars.depths = depths;
-	if (pars.meta.save4DOutput)
-	{
-		if(pars.fpFlag == 0) setup4DOutput(pars);
-		
-		if(pars.meta.saveComplexOutputWave)
-		{
-			pars.cbed_buffer_c = zeros_ND<2, std::complex<PRISMATIC_FLOAT_PRECISION>>({{pars.imageSizeReduce[0], pars.imageSizeReduce[1]}});
-			if(pars.meta.crop4DOutput) pars.cbed_buffer_c = cropOutput(pars.cbed_buffer_c, pars);
-		}
-		else
-		{
-			pars.cbed_buffer = zeros_ND<2, PRISMATIC_FLOAT_PRECISION>({{pars.imageSizeReduce[0], pars.imageSizeReduce[1]}});
-			if(pars.meta.crop4DOutput) pars.cbed_buffer = cropOutput(pars.cbed_buffer, pars);
-		}
-	}
+
+	pars.output = zeros_ND<4, PRISMATIC_FLOAT_PRECISION>({{1, pars.yp.size(), pars.xp.size(), pars.Ndet}});
+	size_t numLayers = 1;
+	PRISMATIC_FLOAT_PRECISION dummy = 1.0;
+	if (pars.meta.saveDPC_CoM)
+		pars.DPC_CoM = zeros_ND<4, PRISMATIC_FLOAT_PRECISION>({{1, pars.yp.size(), pars.xp.size(), 2}});
+	if (pars.meta.save4DOutput && (pars.fpFlag == 0))
+		setup4DOutput(pars, numLayers, dummy);
 }
 
 void setupFourierCoordinates(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
@@ -294,7 +266,6 @@ getSinglePRISMProbe_CPU(Parameters<PRISMATIC_FLOAT_PRECISION> &pars, const PRISM
 	gatekeeper.unlock();
 	return std::make_pair(realspace_probe, kspace_probe);
 }
-
 void buildPRISMOutput_CPUOnly(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
 {
 
@@ -310,8 +281,8 @@ void buildPRISMOutput_CPUOnly(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
 	PRISMATIC_FFTW_PLAN_WITH_NTHREADS(pars.meta.numThreads);
 	vector<thread> workers;
 	workers.reserve(pars.meta.numThreads);																  // prevents multiple reallocations
-	const size_t PRISMATIC_PRINT_FREQUENCY_PROBES = max((size_t)1, pars.numProbes / 10); // for printing status
-	WorkDispatcher dispatcher(0, pars.numProbes);
+	const size_t PRISMATIC_PRINT_FREQUENCY_PROBES = max((size_t)1, pars.xp.size() * pars.yp.size() / 10); // for printing status
+	WorkDispatcher dispatcher(0, pars.xp.size() * pars.yp.size());
 	for (auto t = 0; t < pars.meta.numThreads; ++t)
 	{
 		cout << "Launching CPU worker thread #" << t << " to compute partial PRISM result\n";
@@ -336,13 +307,13 @@ void buildPRISMOutput_CPUOnly(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
 					{
 						if (Nstart % PRISMATIC_PRINT_FREQUENCY_PROBES == 0 | Nstart == 100)
 						{
-							cout << "Computing Probe Position #" << Nstart << "/" << pars.numProbes << endl;
+							cout << "Computing Probe Position5 #" << Nstart << "/" << pars.xp.size() * pars.yp.size() << endl;
 						}
-						ay = (pars.meta.arbitraryProbes) ? Nstart : Nstart / pars.numXprobes;
-						ax = (pars.meta.arbitraryProbes) ? Nstart : Nstart % pars.numXprobes;
+						ay = Nstart / pars.xp.size();
+						ax = Nstart % pars.xp.size();
 						buildSignal_CPU(pars, ay, ax, plan, psi);
 #ifdef PRISMATIC_BUILDING_GUI
-						pars.progressbar->signalOutputUpdate(Nstart, pars.numProbes);
+						pars.progressbar->signalOutputUpdate(Nstart, pars.xp.size() * pars.yp.size());
 #endif
 						++Nstart;
 					}
@@ -418,28 +389,23 @@ void buildSignal_CPU(Parameters<PRISMATIC_FLOAT_PRECISION> &pars,
 	}
 
 	PRISMATIC_FFTW_EXECUTE(plan);
-
-	if(not pars.meta.saveComplexOutputWave)
+	for (auto jj = 0; jj < intOutput.get_dimj(); ++jj)
 	{
-		for (auto jj = 0; jj < intOutput.get_dimj(); ++jj)
+		for (auto ii = 0; ii < intOutput.get_dimi(); ++ii)
 		{
-			for (auto ii = 0; ii < intOutput.get_dimi(); ++ii)
-			{
-				intOutput.at(jj, ii) += pow(abs(psi.at(jj, ii)), 2) * pars.scale;
-			}
+			intOutput.at(jj, ii) += pow(abs(psi.at(jj, ii)), 2) * pars.scale;
 		}
 	}
 
-	size_t write_ay = (pars.meta.arbitraryProbes) ? 0 : ay;
-	if (pars.meta.saveDPC_CoM and not pars.meta.saveComplexOutputWave)
+	if (pars.meta.saveDPC_CoM)
 	{
 		//calculate center of mass; qxa, qya are the fourier coordinates, should have 0 components at boundaries
 		for (long y = 0; y < intOutput.get_dimj(); ++y)
 		{
 			for (long x = 0; x < intOutput.get_dimi(); ++x)
 			{
-				pars.DPC_CoM.at(0, write_ay, ax, 0) += pars.qxaReduce.at(y, x) * intOutput.at(y, x);
-				pars.DPC_CoM.at(0, write_ay, ax, 1) += pars.qyaReduce.at(y, x) * intOutput.at(y, x);
+				pars.DPC_CoM.at(0, ay, ax, 0) += pars.qxaReduce.at(y, x) * intOutput.at(y, x);
+				pars.DPC_CoM.at(0, ay, ax, 1) += pars.qyaReduce.at(y, x) * intOutput.at(y, x);
 			}
 		}
 		//divide by sum of intensity
@@ -448,79 +414,53 @@ void buildSignal_CPU(Parameters<PRISMATIC_FLOAT_PRECISION> &pars,
 		{
 			intensitySum += *iter;
 		}
-		pars.DPC_CoM.at(0, write_ay, ax, 0) /= intensitySum;
-		pars.DPC_CoM.at(0, write_ay, ax, 1) /= intensitySum;
+		pars.DPC_CoM.at(0, ay, ax, 0) /= intensitySum;
+		pars.DPC_CoM.at(0, ay, ax, 1) /= intensitySum;
 	}
 
 	//         update output -- ax,ay are unique per thread so this write is thread-safe without a lock
 	auto idx = pars.alphaInd.begin();
-	if(pars.meta.saveComplexOutputWave)
+	for (auto counts = intOutput.begin(); counts != intOutput.end(); ++counts)
 	{
-		for (auto counts = psi.begin(); counts != psi.end(); ++counts)
+		if (*idx <= pars.Ndet)
 		{
-			if (*idx <= pars.Ndet)
-			{
-				pars.output_c.at(0, write_ay, ax, (*idx) - 1) += *counts*sqrt(pars.scale);
-			}
-			++idx;
+			pars.output.at(0, ay, ax, (*idx) - 1) += *counts;
 		}
-
-	}
-	else
-	{
-		for (auto counts = intOutput.begin(); counts != intOutput.end(); ++counts)
-		{
-			if (*idx <= pars.Ndet)
-			{
-				pars.output.at(0, write_ay, ax, (*idx) - 1) += *counts;
-			}
-			++idx;
-		};
-	}
+		++idx;
+	};
 
 	//save 4D output if applicable
 	if (pars.meta.save4DOutput)
 	{
+		//std::string section4DFilename = generateFilename(pars, 0, ay, ax);
+		// unique_lock<mutex> HDF5_gatekeeper(HDF5_lock);
 		std::stringstream nameString;
 		nameString << "4DSTEM_simulation/data/datacubes/CBED_array_depth" << getDigitString(0);
 
+		// H5::Group dataGroup = pars.outputFile.openGroup(nameString.str());
+		// H5::DataSet CBED_data = dataGroup.openDataSet("datacube");
+
+		hsize_t offset[4] = {ax, ay, 0, 0}; //order by ax, ay so that aligns with py4DSTEM
 
 		PRISMATIC_FLOAT_PRECISION numFP = pars.meta.numFP;
-		hsize_t offset[4] = {ax, write_ay, 0, 0}; //order by ax, ay so that aligns with py4DSTEM
-		if(pars.meta.saveComplexOutputWave)
-		{
-			Array2D<std::complex<PRISMATIC_FLOAT_PRECISION>> finalOutput;
-			if(pars.meta.crop4DOutput)
-			{
-				finalOutput = cropOutput(psi, pars);
-				finalOutput *= sqrt(pars.scale);
-				hsize_t mdims[4] = {1, 1, finalOutput.get_dimi(), finalOutput.get_dimj()};
-				writeDatacube4D(pars, &finalOutput[0], &pars.cbed_buffer_c[0], mdims, offset, numFP, nameString.str());
-			}
-			else
-			{
-				hsize_t mdims[4] = {1, 1, psi.get_dimi(), psi.get_dimj()};
-				finalOutput = fftshift2(psi);
-				finalOutput *= sqrt(pars.scale);
-				writeDatacube4D(pars, &finalOutput[0], &pars.cbed_buffer_c[0], mdims, offset, numFP, nameString.str());
-			}
-		}
-		else
-		{
-			if(pars.meta.crop4DOutput)
-			{
-				Array2D<PRISMATIC_FLOAT_PRECISION> croppedOutput = cropOutput(intOutput, pars);
-				hsize_t mdims[4] = {1, 1, croppedOutput.get_dimi(), croppedOutput.get_dimj()};
-				writeDatacube4D(pars, &croppedOutput[0],  &pars.cbed_buffer[0], mdims, offset, numFP, nameString.str());
-			}
-			else
-			{
-				hsize_t mdims[4] = {1, 1, intOutput.get_dimi(), intOutput.get_dimj()};
-				intOutput = fftshift2(intOutput);
-				writeDatacube4D(pars, &intOutput[0],  &pars.cbed_buffer[0], mdims, offset, numFP, nameString.str());
-			}
-		}
 
+        if(pars.meta.crop4DOutput)
+        {
+            Array2D<PRISMATIC_FLOAT_PRECISION> croppedOutput = cropOutput(intOutput,pars);
+            hsize_t mdims[4] = {1, 1, croppedOutput.get_dimi(), croppedOutput.get_dimj()};
+            writeDatacube4D(pars, &croppedOutput[0], mdims, offset, numFP, nameString.str());
+        }
+        else
+        {
+            hsize_t mdims[4] = {1, 1, intOutput.get_dimi(), intOutput.get_dimj()};
+            intOutput = fftshift2(intOutput);
+            writeDatacube4D(pars, &intOutput[0], mdims, offset, numFP,nameString.str());
+        }
+
+		// CBED_data.close();
+		// dataGroup.close();
+		// HDF5_gatekeeper.unlock();
+		//intOutput.toMRC_f(section4DFilename.c_str());
 	}
 }
 
@@ -635,7 +575,7 @@ void PRISM03_calcOutput(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
 
 #ifdef PRISMATIC_BUILDING_GUI
 	pars.progressbar->signalDescriptionMessage("Computing final output (PRISM)");
-	pars.progressbar->signalOutputUpdate(0, pars.numProbes);
+	pars.progressbar->signalOutputUpdate(0, pars.xp.size() * pars.yp.size());
 #endif
 
 	// compute the final PRISM output

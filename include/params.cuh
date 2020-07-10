@@ -33,7 +33,6 @@ namespace Prismatic {
 		long						 **y_ds;
 		long 						 **x_ds;
 		PRISMATIC_FLOAT_PRECISION    **integratedOutput_ds;
-		PRISMATIC_CUDA_COMPLEX_FLOAT **integratedOutput_c_ds;
 		cufftHandle 			     *cufftPlans;
 		cufftHandle					 *cufftPlansSmall;
 		cudaStream_t 				 *streams;
@@ -42,7 +41,6 @@ namespace Prismatic {
 		size_t 						 **beamsIndex_ph;
         PRISMATIC_CUDA_COMPLEX_FLOAT **trans_d;
         PRISMATIC_CUDA_COMPLEX_FLOAT **prop_d;
-        PRISMATIC_CUDA_COMPLEX_FLOAT **propBack_d;
         size_t 					     **qxInd_d;
         size_t 						 **qyInd_d;
         size_t 					     **beamsIndex_d;
@@ -50,7 +48,6 @@ namespace Prismatic {
 
 		// pinned memory buffers on host
 		PRISMATIC_FLOAT_PRECISION               **output_ph;
-		std::complex<PRISMATIC_FLOAT_PRECISION> **output_c_ph;
 		std::complex<PRISMATIC_FLOAT_PRECISION> *permutedScompact_ph;
 		std::complex<PRISMATIC_FLOAT_PRECISION> *PsiProbeInit_ph;
 		PRISMATIC_FLOAT_PRECISION               *qxaReduce_ph;
@@ -65,7 +62,6 @@ namespace Prismatic {
 		std::complex<PRISMATIC_FLOAT_PRECISION> **ScompactSlice_ph;
 		std::complex<PRISMATIC_FLOAT_PRECISION> *trans_ph;
 		std::complex<PRISMATIC_FLOAT_PRECISION> *prop_ph;
-		std::complex<PRISMATIC_FLOAT_PRECISION> *propBack_ph;
 
 	};
 }

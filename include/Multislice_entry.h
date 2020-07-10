@@ -25,7 +25,5 @@
 
 namespace Prismatic{
 	Parameters<PRISMATIC_FLOAT_PRECISION> Multislice_entry(Metadata<PRISMATIC_FLOAT_PRECISION>& meta);
-
-	void Multislice_runFP(Parameters<PRISMATIC_FLOAT_PRECISION> &pars, size_t fpNum);
 }
 #endif //PRISM_MULTISLICE_ENTRY_H
