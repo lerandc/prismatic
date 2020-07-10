@@ -1,4 +1,0 @@
-#ifndef POTENTIAL_TESTS_H
-#define POTENTIAL_TESTS_H
-
-#endif

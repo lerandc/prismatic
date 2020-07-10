@@ -22,8 +22,7 @@ namespace Prismatic
 enum class Algorithm
 {
 	PRISM,
-	Multislice,
-	HRTEM
+	Multislice
 };
 
 inline void printHeader()
@@ -110,7 +109,6 @@ typedef double PRISMATIC_FLOAT_PRECISION;
 #define PRISMATIC_FFTW_INIT_THREADS fftw_init_threads
 #define PRISMATIC_FFTW_PLAN_WITH_NTHREADS fftw_plan_with_nthreads
 #define PRISMATIC_FFTW_CLEANUP_THREADS fftw_cleanup_threads
-#define PFP_TYPE H5::PredType::NATIVE_DOUBLE
 
 #else
 typedef float PRISMATIC_FLOAT_PRECISION;
@@ -124,7 +122,6 @@ typedef float PRISMATIC_FLOAT_PRECISION;
 #define PRISMATIC_FFTW_INIT_THREADS fftwf_init_threads
 #define PRISMATIC_FFTW_PLAN_WITH_NTHREADS fftwf_plan_with_nthreads
 #define PRISMATIC_FFTW_CLEANUP_THREADS fftwf_cleanup_threads
-#define PFP_TYPE H5::PredType::NATIVE_FLOAT
 #endif //PRISMATIC_ENABLE_DOUBLE_PRECISION
 
 //#ifdef PRISMATIC_BUILDING_GUI
