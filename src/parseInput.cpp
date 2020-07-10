@@ -24,6 +24,7 @@
 #include <cctype>
 #endif //_WIN32
 #include "atom.h"
+#include "probe.h"
 
 namespace Prismatic
 {
@@ -87,6 +88,7 @@ void printHelp()
               << "* --num-FP (-F) value : number of frozen phonon configurations to calculate (default: " << defaults.numFP << ")\n"
               << "* --thermal-effects (-te) bool : whether or not to include Debye-Waller factors (thermal effects) (default: True)\n"
               << "* --occupancy (-oc) bool : whether or not to consider occupancy values for likelihood of atoms existing at each site (default: True)\n"
+              << "* --3Dpotential (-3DP) bool : whether or not to use 3D parameterization with subpixel shifting for calculating the atomic potentials (default: True)\n"
               << "* --save-2D-output (-2D) ang_min ang_max : save the 2D STEM image integrated between ang_min and ang_max (in mrads) (default: Off)\n"
               << "* --save-3D-output (-3D) bool=true : Also save the 3D output at the detector for each probe (3D output mode) (default: On)\n"
               << "* --save-4D-output (-4D) bool=false : Also save the 4D output at the detector for each probe (4D output mode) (default: Off)\n"
@@ -95,7 +97,18 @@ void printHelp()
               << "* --save-DPC-CoM (-DPC) bool=false : Also save the DPC Center of Mass calculation (default: Off)\n"
               << "* --save-real-space-coords (-rsc) bool=false : Also save the real space coordinates of the probe dimensions (default: Off)\n"
               << "* --save-potential-slices (-ps) bool=false : Also save the calculated potential slices (default: Off)\n"
-              << "* --nyquist-sampling (-nqs) bool=false : Set number of probe positions at Nyquist sampling limit (default: Off)]\n";
+              << "* --save-smatrix (-sm) bool=false : Also save the compact smatrix (warning: can be very large) (default: Off)\n"
+              << "* --nyquist-sampling (-nqs) bool=false : Set number of probe positions at Nyquist sampling limit (default: Off)]\n"
+              << "* --import-potential (-ips) bool=false : Use precalculated projected potential from import HDF5 file. Must specify -if and -idp (default: Off)]\n"
+              << "* --import-smatrix (-ism) bool=false : Use precalculated scattering matrix from import HDF5 file -if and -idp (default: Off)]\n"
+              << "* --import-file (-if) filename : File from where to import precalculated potential or smatrix(default: Off)]\n"
+              << "* --import-data-path (-idp) string : Datapath from where precalcualted values are retrieved within HDF5 import file (default: none, uses Prismatic save path)\n"
+              << "* --xtilt-tem (-xtt) min max step : plane wave tilt selection for HRTEM in x (in mrad) (default: " << defaults.minXtilt * 1000 << " " << defaults.maxXtilt * 1000 << " " << defaults.xTiltStep * 1000 << ")\n"
+              << "* --ytilt-tem (-ytt) min max step : plane wave tilt selection for HRTEM in y (in mrad) (default: " << defaults.minYtilt * 1000 << " " << defaults.maxYtilt * 1000 << " " << defaults.yTiltStep * 1000 << ")\n"
+              << "* --rtilt-tem (-rtt) min max : plane wave tilt selection for HRTEM in radial fashion (in mrad) (default: " << defaults.minRtilt * 1000 << " " << defaults.maxRtilt * 1000 << ")\n"
+              << "* --tilt-offset-tem (-tot) xOffset yOffset : offset to select center tilt for HRTEM in (in mrad) (default: " << defaults.xTiltOffset * 1000 << " " << defaults.yTiltOffset * 1000 << ")\n"
+              << "* --probe-pos (-pos) filename : filename containing list of arbitrary probe positions. If set, runs custom list of probe positions; data are returned in order of list. See www.prism-em.com/about for details \n"
+              << "* --max-filesize size : Maximum output file size in gigabytes that Prismatic will be allowed to generate. Default is 2 Gigabytes. \n";
 }
 
 // string white-space trimming utility functions courtesy of https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
@@ -356,6 +369,10 @@ bool parse_a(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
     else if (algo == "p" | algo == "prism")
     {
         meta.algorithm = Prismatic::Algorithm::PRISM;
+    }
+    else if (algo == "t" | algo == "hrtem")
+    {
+        meta.algorithm = Prismatic::Algorithm::HRTEM;
     }
     else
     {
@@ -663,6 +680,8 @@ bool parse_F(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
         cout << "Invalid value \"" << (*argv)[1] << "\" provided for number of frozen phonon configurations (syntax is -F #)\n";
         return false;
     }
+    //set a flag for when dealing with import files
+    meta.userSpecifiedNumFP = true;
     argc -= 2;
     argv[0] += 2;
     return true;
@@ -812,7 +831,6 @@ bool parse_o(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
         return false;
     }
     meta.filenameOutput = std::string((*argv)[1]);
-    //cout <<"meta.filenameAtoms = " << meta.filenameAtoms << endl;
     argc -= 2;
     argv[0] += 2;
     return true;
@@ -828,7 +846,37 @@ bool parse_of(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
         return false;
     }
     meta.outputFolder = std::string((*argv)[1]);
-    //cout <<"meta.filenameAtoms = " << meta.filenameAtoms << endl;
+    argc -= 2;
+    argv[0] += 2;
+    return true;
+};
+
+bool parse_if(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+
+    if (argc < 2)
+    {
+        cout << "No filename provided for -if (syntax is -if filename)\n";
+        return false;
+    }
+    meta.importFile = std::string((*argv)[1]);
+    argc -= 2;
+    argv[0] += 2;
+
+    return true;
+};
+
+bool parse_idp(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+
+    if (argc < 2)
+    {
+        cout << "No datapath provided for -idp (syntax is -idp /path/)\n";
+        return false;
+    }
+    meta.importPath = std::string((*argv)[1]);
     argc -= 2;
     argv[0] += 2;
     return true;
@@ -1260,6 +1308,20 @@ bool parse_oc(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
     return true;
 };
 
+bool parse_3DP(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+    if (argc < 2)
+    {
+        cout << "No value provided for -3DP (syntax is -3DP bool)\n";
+        return false;
+    }
+    meta.potential3D = std::string((*argv)[1]) == "0" ? false : true;
+    argc -= 2;
+    argv[0] += 2;
+    return true;
+};
+
 bool parse_2D(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
               int &argc, const char ***argv)
 {
@@ -1400,6 +1462,181 @@ bool parse_ps(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
     return true;
 };
 
+bool parse_sm(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+    if (argc < 2)
+    {
+        cout << "No value provided for -sm (syntax is -sm bool)\n";
+        return false;
+    }
+    meta.saveSMatrix = std::string((*argv)[1]) == "0" ? false : true;
+    argc -= 2;
+    argv[0] += 2;
+    return true;
+};
+
+bool parse_ips(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+    if (argc < 2)
+    {
+        cout << "No value provided for -ips (syntax is -ips bool)\n";
+        return false;
+    }
+    meta.importPotential = std::string((*argv)[1]) == "0" ? false : true;
+    argc -= 2;
+    argv[0] += 2;
+    return true;
+};
+
+bool parse_ism(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+    if (argc < 2)
+    {
+        cout << "No value provided for -ism (syntax is -ism bool)\n";
+        return false;
+    }
+    meta.importSMatrix = std::string((*argv)[1]) == "0" ? false : true;
+    argc -= 2;
+    argv[0] += 2;
+    return true;
+};
+
+bool parse_xtt(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+             int &argc, const char ***argv)
+{
+    if (argc < 4)
+    {
+        cout << "Insufficient parameters provided for HRTEM x tilts (syntax is -xtt min max step)\n";
+        return false;
+    }
+
+    // the indexing in PRISM stores the cell dimensions as Z, Y, X so we must rearrange the
+    // order of the inputs which are X, Y, Z
+    if ((meta.minXtilt = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[1]) / 1000) < 0)
+    {
+        cout << "Invalid value \"" << (*argv)[1] << "\" provided for X tilt min (syntax is -xtt min max step)\n";
+        return false;
+    }
+    if ((meta.maxXtilt = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[2]) / 1000) <= 0)
+    {
+        cout << "Invalid value \"" << (*argv)[2] << "\" provided for X tilt max (syntax is -xtt min max step)\n";
+        return false;
+    }
+    if ((meta.xTiltStep = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[3]) / 1000) <= 0)
+    {
+        cout << "Invalid value \"" << (*argv)[3] << "\" provided for X tilt step (syntax is -xtt min max step)\n";
+        return false;
+    }
+    argc -= 4;
+    argv[0] += 4;
+    return true;
+};
+
+bool parse_ytt(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+             int &argc, const char ***argv)
+{
+    if (argc < 4)
+    {
+        cout << "Insufficient parameters provided for HRTEM y tilts (syntax is -ytt min max step)\n";
+        return false;
+    }
+
+    // the indexing in PRISM stores the cell dimensions as Z, Y, X so we must rearrange the
+    // order of the inputs which are X, Y, Z
+    if ((meta.minYtilt = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[1]) / 1000) < 0)
+    {
+        cout << "Invalid value \"" << (*argv)[1] << "\" provided for Y tilt min (syntax is -ytt min max step)\n";
+        return false;
+    }
+    if ((meta.maxYtilt = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[2]) / 1000) <= 0)
+    {
+        cout << "Invalid value \"" << (*argv)[2] << "\" provided for Y tilt max (syntax is -ytt min max step)\n";
+        return false;
+    }
+    if ((meta.yTiltStep = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[3]) / 1000) <= 0)
+    {
+        cout << "Invalid value \"" << (*argv)[3] << "\" provided for Y tilt step (syntax is -ytt min max step)\n";
+        return false;
+    }
+    argc -= 4;
+    argv[0] += 4;
+    return true;
+};
+
+bool parse_tot(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+    if (argc < 3)
+    {
+        cout << "Invalid number of parameters provided for -tot (syntax is -tot xOffset yOffset (in mrad))\n";
+        return false;
+    }
+    meta.xTiltOffset = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[1]) / 1000;
+    meta.yTiltOffset = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[2]) / 1000;
+    argc -= 3;
+    argv[0] += 3;
+    return true;
+};
+
+bool parse_rtt(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+    if (argc < 3)
+    {
+        cout << "Invalid number of parameters provided for -rtt (syntax is -rtt min max (in mrad))\n";
+        return false;
+    }
+    if ((meta.minRtilt = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[1]) / 1000) < 0)
+    {
+        cout << "Invalid value \"" << (*argv)[1] << "\" provided for R tilt min (syntax is -rtt min max)\n";
+        return false;
+    }
+    if ((meta.maxRtilt = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[2]) / 1000) <= 0)
+    {
+        cout << "Invalid value \"" << (*argv)[2] << "\" provided for R tilt max (syntax is -rtt min max)\n";
+        return false;
+    }
+    meta.tiltMode = Prismatic::TiltSelection::Radial;
+    argc -= 3;
+    argv[0] += 3;
+    return true;
+};
+
+bool parse_pos(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+             int &argc, const char ***argv)
+{
+    if (argc < 2)
+    {
+        cout << "No filename provided for -pos (syntax is -pos filename)\n";
+        return false;
+    }
+    readProbes(std::string((*argv)[1]), meta.probes_x, meta.probes_y);
+    argc -= 2;
+    argv[0] += 2;
+    return true;
+};
+
+bool parse_maxFile(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
+              int &argc, const char ***argv)
+{
+    if (argc < 2)
+    {
+        cout << "No file size provided for --max-filesize (syntax is --max-filesize filesize)\n";
+        return false;
+    }
+    if ((meta.maxFileSize = (PRISMATIC_FLOAT_PRECISION)atof((*argv)[1])) * 1e9 == 0)
+    {
+        cout << "Invalid value \"" << (*argv)[1] << "\" provided for max file size (syntax is --max-filesize filesize)\n";
+        return false;
+    }
+    argc -= 2;
+    argv[0] += 2;
+    return true;
+};
+
 bool parseInputs(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
                  int &argc, const char ***argv)
 {
@@ -1464,6 +1701,7 @@ static std::map<std::string, parseFunction> parser{
     {"--num-FP", parse_F}, {"-F", parse_F},
     {"--thermal-effects", parse_te}, {"-te", parse_te},
     {"--occupancy", parse_oc}, {"-oc", parse_oc},
+    {"--3Dpotential", parse_3DP}, {"-3DP", parse_3DP},
     {"--save-2D-output", parse_2D}, {"-2D", parse_2D},
     {"--save-3D-output", parse_3D}, {"-3D", parse_3D},
     {"--save-4D-output", parse_4D}, {"-4D", parse_4D},
@@ -1472,7 +1710,14 @@ static std::map<std::string, parseFunction> parser{
     {"--save-DPC-CoM", parse_dpc}, {"-DPC", parse_dpc},
     {"--save-real-space-coords", parse_rsc}, {"-rsc", parse_rsc},
     {"--save-potential-slices", parse_ps}, {"-ps", parse_ps},
-    {"--nyquist-sampling", parse_nqs}, {"-nqs", parse_nqs}};
+    {"--nyquist-sampling", parse_nqs}, {"-nqs", parse_nqs},
+    {"--xtilt-tem", parse_xtt}, {"-xtt", parse_xtt},
+    {"--ytilt-tem", parse_ytt}, {"-ytt", parse_ytt},
+    {"--rtilt-tem", parse_rtt}, {"-rtt", parse_rtt},
+    {"--tilt-offset-tem", parse_tot}, {"-tot", parse_tot},
+    {"--probe-pos", parse_pos}, {"-pos", parse_pos},
+    {"--max-filesize", parse_maxFile}
+    };
 bool parseInput(Metadata<PRISMATIC_FLOAT_PRECISION> &meta,
                 int &argc, const char ***argv)
 {

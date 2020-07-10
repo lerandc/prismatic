@@ -11,21 +11,16 @@
 //    Implementation of Image Simulation Algorithms for Scanning
 //	  Transmission Electron Microscopy. arXiv:1706.08563 (2017)
 
-#ifndef PRISM_MULTISLICE_ENTRY_H
-#define PRISM_MULTISLICE_ENTRY_H
+#ifndef PRISM_HRTEM_ENTRY_H
+#define PRISM_HRTEM_ENTRY_H
 #include "meta.h"
 #include "params.h"
 #include "ArrayND.h"
 #include "configure.h"
-#include "Multislice_calcOutput.h"
-#include "PRISM01_calcPotential.h"
-#include "PRISM02_calcSMatrix.h"
 #include <algorithm>
 
 
 namespace Prismatic{
-	Parameters<PRISMATIC_FLOAT_PRECISION> Multislice_entry(Metadata<PRISMATIC_FLOAT_PRECISION>& meta);
-
-	void Multislice_runFP(Parameters<PRISMATIC_FLOAT_PRECISION> &pars, size_t fpNum);
+	Parameters<PRISMATIC_FLOAT_PRECISION> HRTEM_entry(Metadata<PRISMATIC_FLOAT_PRECISION>& meta);
 }
-#endif //PRISM_MULTISLICE_ENTRY_H
+#endif //PRISM_HRTEM_ENTRY_H
