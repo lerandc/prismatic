@@ -1481,13 +1481,13 @@ void PRISMMainWindow::linkPotentialSliders_1_to_2(){
     this->ui->slider_slicemin_2->setValue(this->ui->slider_slicemin->value());
     this->ui->slider_slicemax_2->setValue(this->ui->slider_slicemax->value());
     // this->ui->slider_bothSlices_2->setValue(this->ui->slider_bothSlices->value());
-    this->ui->checkBox_sqrtIntensityPot_2->setChecked(this->ui->checkBox_sqrtIntensityPot()->isChecked());
+    this->ui->checkBox_sqrtIntensityPot_2->setChecked(this->ui->checkBox_sqrtIntensityPot->isChecked());
 }
 
 void PRISMMainWindow::linkPotentialSliders_2_to_1(){
     this->ui->slider_slicemin->setValue(this->ui->slider_slicemin_2->value());
     this->ui->slider_slicemax->setValue(this->ui->slider_slicemax_2->value());
-    this->ui->checkBox_sqrtIntensityPot->setChecked(this->ui->checkBox_sqrtIntensityPot_2()->isChecked());
+    this->ui->checkBox_sqrtIntensityPot->setChecked(this->ui->checkBox_sqrtIntensityPot_2->isChecked());
     // this->ui->slider_bothSlices->setValue(this->ui->slider_bothSlices_2->value());
 
     // add the rest of the slots here so that they occur in the right order
@@ -2212,24 +2212,24 @@ void PRISMMainWindow::updateSlider_lineEdits_HRTEM_rad(int val){
 void PRISMMainWindow::updateContrastPotMin(){
     bool flag = false;
     contrast_potentialMin = (PRISMATIC_FLOAT_PRECISION)ui->lineEdit_contrastPotMin->text().toDouble(&flag);
-    this->ui->lineEdit_contrastPotMin_2->setText(this->ui->lineEdit_contrstPotMin->text());
+    this->ui->lineEdit_contrastPotMin_2->setText(this->ui->lineEdit_contrastPotMin->text());
     if (flag)updatePotentialDisplay();
 }
 
 void PRISMMainWindow::updateContrastPotMax(){
     bool flag = false;
     contrast_potentialMax = (PRISMATIC_FLOAT_PRECISION)ui->lineEdit_contrastPotMax->text().toDouble(&flag);
-    this->ui->lineEdit_contrastPotMax_2->setText(this->ui->lineEdit_contrstPotMax->text());
+    this->ui->lineEdit_contrastPotMax_2->setText(this->ui->lineEdit_contrastPotMax->text());
     if (flag)updatePotentialDisplay();
 }
 
 void PRISMMainWindow::updateContrastPotMin_2(){
-    this->ui->lineEdit_contrastPotMin->setText(this->ui->lineEdit_contrstPotMin_2->text());
+    this->ui->lineEdit_contrastPotMin->setText(this->ui->lineEdit_contrastPotMin_2->text());
     updateContrastPotMin();
 }
 
 void PRISMMainWindow::updateContrastPotMax_2(){
-    this->ui->lineEdit_contrastPotMax->setText(this->ui->lineEdit_contrstPotMax_2->text());
+    this->ui->lineEdit_contrastPotMax->setText(this->ui->lineEdit_contrastPotMax_2->text());
     updateContrastPotMax();
 }
 
