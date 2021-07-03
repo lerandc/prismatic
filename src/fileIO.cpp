@@ -664,6 +664,23 @@ void sortHRTEMbeams(Parameters<PRISMATIC_FLOAT_PRECISION> &pars)
     std::sort(indices.begin(), indices.end(), [&](int i, int j){return tilts[i]<tilts[j];} );
 
 	pars.HRTEMbeamOrder = indices;
+
+#ifdef PRISMATIC_BUILDING_GUI
+	PRISMATIC_FLOAT_PRECISION max_rad = 0.0;
+    PRISMATIC_FLOAT_PRECISION pi = acos(-1);
+	std::vector<PRISMATIC_FLOAT_PRECISION> tilt_rads(N);
+	std::vector<PRISMATIC_FLOAT_PRECISION> tilt_angs(N);
+	for(auto i = 0; i < N; i++){
+		PRISMATIC_FLOAT_PRECISION tmp = sqrt(pow(tilts[i].first, 2.0) + pow(tilts[i].second, 2.0));
+		max_rad = (tmp > max_rad) ? tmp : max_rad;
+		tilt_rads[i] = tmp;
+		tilt_angs[i] = fmod(std::atan2(tilts[i].second, tilts[i].first), 2.0*pi);
+	}
+	pars.HRTEM_beam_max_rad = max_rad;
+	pars.HRTEM_beam_rad = tilt_rads;
+	pars.HRTEM_beam_ang = tilt_angs;
+
+#endif
 	
 	int minXtiltInd = *std::min_element(pars.xTiltsInd_tem.begin(), pars.xTiltsInd_tem.end());
 	int minYtiltInd = *std::min_element(pars.yTiltsInd_tem.begin(), pars.yTiltsInd_tem.end());

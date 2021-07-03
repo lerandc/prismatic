@@ -1868,7 +1868,7 @@
                          </size>
                         </property>
                         <property name="text">
-                         <string>Inner</string>
+                         <string>Radius</string>
                         </property>
                        </widget>
                       </item>
@@ -1891,7 +1891,7 @@
                       <item row="0" column="0" colspan="2">
                        <widget class="QLabel" name="label_72">
                         <property name="text">
-                         <string>Virtual Detectors</string>
+                         <string>Beam Selection</string>
                         </property>
                        </widget>
                       </item>
@@ -1949,7 +1949,7 @@
                          </size>
                         </property>
                         <property name="text">
-                         <string>Outer</string>
+                         <string>Angle</string>
                         </property>
                        </widget>
                       </item>

@@ -344,7 +344,7 @@ void FullCalcThread::run()
 
 
     if(params.meta.algorithm == Prismatic::Algorithm::HRTEM){
-        this->parent->outputReceived_HRTEM(params.Scompact);
+        this->parent->outputReceived_HRTEM(params.Scompact, params.HRTEM_beam_max_rad, params.HRTEM_beam_rad, params.HRTEM_beam_ang);
     }
     else{
         this->parent->outputReceived(params.output);

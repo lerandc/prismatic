@@ -151,6 +151,9 @@ namespace Prismatic{
 		#ifdef PRISMATIC_BUILDING_GUI
 				prism_progressbar *progressbar;
                 PRISMThread *parent_thread;
+				T HRTEM_beam_max_rad;
+				std::vector<T> HRTEM_beam_rad;
+				std::vector<T> HRTEM_beam_ang;
 		#endif
 		Parameters(){};
 		#ifdef PRISMATIC_BUILDING_GUI

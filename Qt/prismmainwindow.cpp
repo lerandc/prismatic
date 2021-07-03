@@ -272,6 +272,8 @@ PRISMMainWindow::PRISMMainWindow(QWidget* parent) :
     connect(this->ui->slider_angmax, SIGNAL(valueChanged(int)), this, SLOT(updateSlider_lineEdits_max_ang(int)));
     connect(this->ui->slider_angmin, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage()));
     connect(this->ui->slider_angmax, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage()));
+    connect(this->ui->slider_angmin_2, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage_HRTEM()));
+    connect(this->ui->slider_angmax_2, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage_HRTEM()));
     connect(this->ui->radBtn_HRTEM_amp, SIGNAL(clicked(bool)), this, SLOT(updateOutputFloatImage_HRTEM()));
     connect(this->ui->radBtn_HRTEM_phase, SIGNAL(clicked(bool)), this, SLOT(updateOutputFloatImage_HRTEM()));
     connect(this->ui->lineEdit_angmin, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits_ang()));
@@ -1137,7 +1139,7 @@ void PRISMMainWindow::setytt_min_fromLineEdit(){
     bool flag = false;
     PRISMATIC_FLOAT_PRECISION val = (PRISMATIC_FLOAT_PRECISION)this->ui->lineEdit_ytt_min->text().toDouble(&flag);
     if (flag){
-        this->meta->minXtilt =  val / 1000;
+        this->meta->minYtilt =  val / 1000;
         std::cout << "Setting HRTEM min Y tilt to " << val << " mrad" << std::endl;
     }
     resetCalculation();
@@ -1147,7 +1149,7 @@ void PRISMMainWindow::setytt_max_fromLineEdit(){
     bool flag = false;
     PRISMATIC_FLOAT_PRECISION val = (PRISMATIC_FLOAT_PRECISION)this->ui->lineEdit_ytt_max->text().toDouble(&flag);
     if (flag){
-        this->meta->maxXtilt =  val / 1000;
+        this->meta->maxYtilt =  val / 1000;
         std::cout << "Setting HRTEM max Y tilt to " << val << " mrad" << std::endl;
     }
     resetCalculation();
@@ -1167,7 +1169,7 @@ void PRISMMainWindow::setrtt_min_fromLineEdit(){
     bool flag = false;
     PRISMATIC_FLOAT_PRECISION val = (PRISMATIC_FLOAT_PRECISION)this->ui->lineEdit_rtt_min->text().toDouble(&flag);
     if (flag){
-        this->meta->minXtilt =  val / 1000;
+        this->meta->minRtilt =  val / 1000;
         std::cout << "Setting HRTEM min R tilt to " << val << " mrad" << std::endl;
     }
     resetCalculation();
@@ -1177,7 +1179,7 @@ void PRISMMainWindow::setrtt_max_fromLineEdit(){
     bool flag = false;
     PRISMATIC_FLOAT_PRECISION val = (PRISMATIC_FLOAT_PRECISION)this->ui->lineEdit_rtt_max->text().toDouble(&flag);
     if (flag){
-        this->meta->maxXtilt =  val / 1000;
+        this->meta->maxRtilt =  val / 1000;
         std::cout << "Setting HRTEM max R tilt to " << val << " mrad" << std::endl;
     }
     resetCalculation();
@@ -1908,19 +1910,62 @@ void PRISMMainWindow::updateOutputImage_HRTEM(){
             outputImage_HRTEM = QImage(smatrix.get_dimj(), smatrix.get_dimi(), QImage::Format_ARGB32);
             }
             // update sliders to match dimensions of output, which also triggers a redraw of the image
-            this->ui->slider_angmin_2->setMinimum(0);
-            this->ui->slider_angmin_2->setMaximum(smatrix.get_dimk()-1);
-            this->ui->lineEdit_angmin_2->setText(QString::number((PRISMATIC_FLOAT_PRECISION) smatrix.get_dimk()));
+            this->ui->slider_angmin_2->setMinimum(0); //radius
+            this->ui->slider_angmin_2->setMaximum(100);
+            this->ui->slider_angmax_2->setMinimum(0); //angle
+            this->ui->slider_angmax_2->setMaximum(100);
+            // this->ui->lineEdit_angmin_2->setText(QString::number((PRISMATIC_FLOAT_PRECISION) smatrix.get_dimk()));
         }
     updateOutputFloatImage_HRTEM();
+}
+
+size_t PRISMMainWindow::mapHRTEM_sliders(){
+    // take sliders values
+    // interpolate to radius, angle measurements
+    PRISMATIC_FLOAT_PRECISION pi = std::acos(-1);
+    PRISMATIC_FLOAT_PRECISION slider_rad = (this->ui->slider_angmin_2->value()/100.0) * HRTEM_beam_max_rad;
+    PRISMATIC_FLOAT_PRECISION slider_ang = (this->ui->slider_angmax_2->value()/100.0) * 2.0*pi;
+
+    // calculate distances of each beam to current slider position
+    std::vector<PRISMATIC_FLOAT_PRECISION> dist_rad(smatrix.get_dimk());
+    std::vector<PRISMATIC_FLOAT_PRECISION> dist_ang(smatrix.get_dimk());
+    PRISMATIC_FLOAT_PRECISION dist_rad_max = 0.0;
+    PRISMATIC_FLOAT_PRECISION dist_ang_max = pi;
+    for(auto i = 0; i < smatrix.get_dimk(); i++){
+        PRISMATIC_FLOAT_PRECISION tmp_rad = sqrt(pow(slider_rad-HRTEM_beam_rad[i], 2.0));
+        PRISMATIC_FLOAT_PRECISION tmp_ang_0 = fmod(std::abs(slider_ang-HRTEM_beam_ang[i]), 2.0*pi);
+        PRISMATIC_FLOAT_PRECISION tmp_ang_1 = fmod(std::abs(fmod(slider_ang+pi, 2.0*pi) - fmod(HRTEM_beam_ang[i]+pi, 2.0*pi)), 2.0*pi);
+        PRISMATIC_FLOAT_PRECISION tmp_ang = std::min(tmp_ang_0, tmp_ang_1);
+        
+        dist_rad_max = (tmp_rad > dist_rad_max) ? tmp_rad : dist_rad_max;
+        dist_rad[i] = tmp_rad;
+        dist_ang[i] = tmp_ang;
+    }
+
+    if (dist_rad_max == 0.0) dist_rad_max = 1.0;
+    // normalize distances to max distance and compute final distance metrics
+    PRISMATIC_FLOAT_PRECISION dist_final = 100;
+    size_t min_ind;
+    for(auto i = 0; i < smatrix.get_dimk(); i++){
+        dist_rad[i] /= dist_rad_max;
+        dist_ang[i] /= dist_ang_max;
+        PRISMATIC_FLOAT_PRECISION cur_dist = sqrt(pow(dist_rad[i], 2.0) + pow(dist_ang[i], 2.0));
+        if(cur_dist < dist_final){
+            dist_final = cur_dist;
+            min_ind = i;
+        }
+    }
+    
+    return min_ind;
 }
 
 void PRISMMainWindow::updateOutputFloatImage_HRTEM(){
       if (checkoutputArrayExists_HRTEM()){
         QMutexLocker gatekeeper(&outputLock);
 
+        PRISMATIC_FLOAT_PRECISION pi = std::acos(-1);
         // integrate image into the float array, then convert to uchar
-        size_t beam = 0; // this->ui->slider_angmin_2->value();
+        size_t beam = mapHRTEM_sliders();
         outputImage_HRTEM_float = Prismatic::zeros_ND<2, PRISMATIC_FLOAT_PRECISION>({{smatrix.get_dimj(), smatrix.get_dimi()}});
         if(this->ui->radBtn_HRTEM_amp->isChecked()){
             for (auto j = 0; j < smatrix.get_dimj(); ++j){
@@ -1931,10 +1976,9 @@ void PRISMMainWindow::updateOutputFloatImage_HRTEM(){
         }
         else
         {
-            std::cout << "radBtn phase checked?: " << this->ui->radBtn_HRTEM_phase->isChecked() << std::endl;
             for (auto j = 0; j < smatrix.get_dimj(); ++j){
                 for (auto i = 0; i < smatrix.get_dimi(); ++i){
-                    outputImage_HRTEM_float.at(j,i) += std::arg(smatrix.at(beam, j, i));
+                    outputImage_HRTEM_float.at(j,i) += std::arg(smatrix.at(beam, j, i))+pi;;
                 }
             }
         }
@@ -1947,6 +1991,10 @@ void PRISMMainWindow::updateOutputFloatImage_HRTEM(){
                                        outputImage_HRTEM_float.end());
         contrast_outputMin_HRTEM = *minval;
         contrast_outputMax_HRTEM = *maxval;
+        if(this->ui->radBtn_HRTEM_phase->isChecked()){
+            contrast_outputMin_HRTEM = 0.0;
+            contrast_outputMax_HRTEM = 2.0*pi;
+        }
         ui->lineEdit_contrast_outputMin_2->setText(QString::number(contrast_outputMin));
         ui->lineEdit_contrast_outputMax_2->setText(QString::number(contrast_outputMax));
     }
@@ -2549,10 +2597,16 @@ void PRISMMainWindow::outputReceived(Prismatic::Array4D<PRISMATIC_FLOAT_PRECISIO
     }
 }
 
-void PRISMMainWindow::outputReceived_HRTEM(Prismatic::Array3D<std::complex<PRISMATIC_FLOAT_PRECISION>> _output){
+void PRISMMainWindow::outputReceived_HRTEM(Prismatic::Array3D<std::complex<PRISMATIC_FLOAT_PRECISION>> _output,
+                                           PRISMATIC_FLOAT_PRECISION max_rad,
+                                           std::vector<PRISMATIC_FLOAT_PRECISION> beam_rad,
+                                           std::vector<PRISMATIC_FLOAT_PRECISION> beam_ang){
     {
         QMutexLocker gatekeeper(&outputLock);
         smatrix = _output;
+        HRTEM_beam_max_rad = max_rad;
+        HRTEM_beam_rad = beam_rad;
+        HRTEM_beam_ang = beam_ang;
         outputArrayExists_HRTEM = true;
     }
 }
@@ -2580,10 +2634,14 @@ void PRISMMainWindow::enableOutputWidgets(){
     ui->slider_angmax->setEnabled(true);
     ui->slider_angmin->setEnabled(true);
     ui->slider_bothDetectors->setEnabled(true);
+    ui->slider_angmax_2->setEnabled(true);
+    ui->slider_angmin_2->setEnabled(true);
     ui->lineEdit_contrast_outputMax->setEnabled(true);
     ui->lineEdit_contrast_outputMin->setEnabled(true);
     ui->lineEdit_angmin->setEnabled(true);
     ui->lineEdit_angmax->setEnabled(true);
+    ui->lineEdit_angmin_2->setEnabled(true);
+    ui->lineEdit_angmax_2->setEnabled(true);
 }
 void PRISMMainWindow::resetCalculation(){
 //    QMutexLocker gatekeeper2(&calculationLock);
