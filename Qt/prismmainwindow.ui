@@ -1377,7 +1377,7 @@
                 <item>
                  <widget class="QTabWidget" name="tabWidget_3">
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>2</number>
                   </property>
                   <widget class="QWidget" name="tab_sample_2">
                    <attribute name="title">
@@ -1780,65 +1780,8 @@
                         </property>
                        </widget>
                       </item>
-                      <item row="1" column="4">
-                       <widget class="QLabel" name="label_74">
-                        <property name="minimumSize">
-                         <size>
-                          <width>35</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="text">
-                         <string>Min</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="2" column="4">
-                       <widget class="QLabel" name="label_68">
-                        <property name="minimumSize">
-                         <size>
-                          <width>35</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="text">
-                         <string>Max</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="2" column="1">
-                       <widget class="QLineEdit" name="lineEdit_angmax_2">
-                        <property name="enabled">
-                         <bool>false</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="minimumSize">
-                         <size>
-                          <width>50</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>60</width>
-                          <height>16777215</height>
-                         </size>
-                        </property>
-                        <property name="maxLength">
-                         <number>6</number>
-                        </property>
-                        <property name="alignment">
-                         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="2" column="3">
-                       <widget class="QLineEdit" name="lineEdit_contrast_outputMax_2">
+                      <item row="1" column="3">
+                       <widget class="QLineEdit" name="lineEdit_contrast_outputMin_2">
                         <property name="enabled">
                          <bool>false</bool>
                         </property>
@@ -1853,22 +1796,16 @@
                         </property>
                        </widget>
                       </item>
-                      <item row="2" column="0">
-                       <widget class="QLabel" name="label_73">
+                      <item row="1" column="4">
+                       <widget class="QLabel" name="label_74">
                         <property name="minimumSize">
                          <size>
-                          <width>40</width>
+                          <width>35</width>
                           <height>0</height>
                          </size>
                         </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>35</width>
-                          <height>16777215</height>
-                         </size>
-                        </property>
                         <property name="text">
-                         <string>Outer</string>
+                         <string>Min</string>
                         </property>
                        </widget>
                       </item>
@@ -1916,8 +1853,50 @@
                         </property>
                        </widget>
                       </item>
-                      <item row="1" column="3">
-                       <widget class="QLineEdit" name="lineEdit_contrast_outputMin_2">
+                      <item row="1" column="0">
+                       <widget class="QLabel" name="label_69">
+                        <property name="minimumSize">
+                         <size>
+                          <width>40</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>35</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>Inner</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="0" colspan="2">
+                       <widget class="QLabel" name="label_71">
+                        <property name="font">
+                         <font>
+                          <family>Arial</family>
+                          <italic>true</italic>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>grab both</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="0" column="0" colspan="2">
+                       <widget class="QLabel" name="label_72">
+                        <property name="text">
+                         <string>Virtual Detectors</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="3">
+                       <widget class="QLineEdit" name="lineEdit_contrast_outputMax_2">
                         <property name="enabled">
                          <bool>false</bool>
                         </property>
@@ -1939,41 +1918,6 @@
                         </property>
                        </widget>
                       </item>
-                      <item row="3" column="0" colspan="2">
-                       <widget class="QLabel" name="label_71">
-                        <property name="font">
-                         <font>
-                          <family>Arial</family>
-                          <italic>true</italic>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>grab both</string>
-                        </property>
-                        <property name="alignment">
-                         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="1" column="0">
-                       <widget class="QLabel" name="label_69">
-                        <property name="minimumSize">
-                         <size>
-                          <width>40</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>35</width>
-                          <height>16777215</height>
-                         </size>
-                        </property>
-                        <property name="text">
-                         <string>Inner</string>
-                        </property>
-                       </widget>
-                      </item>
                       <item row="2" column="2">
                        <widget class="QSlider" name="slider_angmax_2">
                         <property name="enabled">
@@ -1990,10 +1934,80 @@
                         </property>
                        </widget>
                       </item>
-                      <item row="0" column="0" colspan="2">
-                       <widget class="QLabel" name="label_72">
+                      <item row="2" column="0">
+                       <widget class="QLabel" name="label_73">
+                        <property name="minimumSize">
+                         <size>
+                          <width>40</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>35</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
                         <property name="text">
-                         <string>Virtual Detectors</string>
+                         <string>Outer</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="4">
+                       <widget class="QLabel" name="label_68">
+                        <property name="minimumSize">
+                         <size>
+                          <width>35</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="text">
+                         <string>Max</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="3" column="3">
+                       <widget class="QRadioButton" name="radBtn_HRTEM_amp">
+                        <property name="text">
+                         <string>Amplitude</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="2" column="1">
+                       <widget class="QLineEdit" name="lineEdit_angmax_2">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>50</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>60</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="maxLength">
+                         <number>6</number>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="4" column="3">
+                       <widget class="QRadioButton" name="radBtn_HRTEM_phase">
+                        <property name="text">
+                         <string>Phase</string>
                         </property>
                        </widget>
                       </item>
@@ -5106,7 +5120,7 @@
                     <property name="geometry">
                      <rect>
                       <x>0</x>
-                      <y>-123</y>
+                      <y>0</y>
                       <width>309</width>
                       <height>332</height>
                      </rect>

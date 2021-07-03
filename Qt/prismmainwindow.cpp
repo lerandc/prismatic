@@ -272,6 +272,8 @@ PRISMMainWindow::PRISMMainWindow(QWidget* parent) :
     connect(this->ui->slider_angmax, SIGNAL(valueChanged(int)), this, SLOT(updateSlider_lineEdits_max_ang(int)));
     connect(this->ui->slider_angmin, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage()));
     connect(this->ui->slider_angmax, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage()));
+    connect(this->ui->radBtn_HRTEM_amp, SIGNAL(clicked(bool)), this, SLOT(updateOutputFloatImage_HRTEM()));
+    connect(this->ui->radBtn_HRTEM_phase, SIGNAL(clicked(bool)), this, SLOT(updateOutputFloatImage_HRTEM()));
     connect(this->ui->lineEdit_angmin, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits_ang()));
     connect(this->ui->lineEdit_angmax, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits_ang()));
     connect(this->ui->lineEdit_contrast_outputMin, SIGNAL(editingFinished()), this, SLOT(updateContrastAngMin()));
@@ -522,6 +524,10 @@ void PRISMMainWindow::updateDisplay(){
             this->ui->radBtn_Multislice->setChecked(true);
             break;
     }
+
+    this->ui->radBtn_HRTEM_amp->setChecked(true);
+    this->ui->radBtn_HRTEM_phase->setChecked(false);
+
 #ifndef PRISMATIC_ENABLE_GPU
     this->ui->spinBox_numGPUs->setEnabled(false);
     this->ui->spinBox_numStreams->setEnabled(false);
@@ -1916,11 +1922,23 @@ void PRISMMainWindow::updateOutputFloatImage_HRTEM(){
         // integrate image into the float array, then convert to uchar
         size_t beam = 0; // this->ui->slider_angmin_2->value();
         outputImage_HRTEM_float = Prismatic::zeros_ND<2, PRISMATIC_FLOAT_PRECISION>({{smatrix.get_dimj(), smatrix.get_dimi()}});
-        for (auto j = 0; j < smatrix.get_dimj(); ++j){
-            for (auto i = 0; i < smatrix.get_dimi(); ++i){
-                outputImage_HRTEM_float.at(j,i) += pow(std::abs(smatrix.at(beam, j, i)), 2.0);
+        if(this->ui->radBtn_HRTEM_amp->isChecked()){
+            for (auto j = 0; j < smatrix.get_dimj(); ++j){
+                for (auto i = 0; i < smatrix.get_dimi(); ++i){
+                    outputImage_HRTEM_float.at(j,i) += pow(std::abs(smatrix.at(beam, j, i)), 2.0);
+                }
             }
         }
+        else
+        {
+            std::cout << "radBtn phase checked?: " << this->ui->radBtn_HRTEM_phase->isChecked() << std::endl;
+            for (auto j = 0; j < smatrix.get_dimj(); ++j){
+                for (auto i = 0; i < smatrix.get_dimi(); ++i){
+                    outputImage_HRTEM_float.at(j,i) += std::arg(smatrix.at(beam, j, i));
+                }
+            }
+        }
+        
 
         // get max/min values for contrast setting
         auto minval = std::min_element(outputImage_HRTEM_float.begin(),
@@ -1955,7 +1973,7 @@ void PRISMMainWindow::updateOutputDisplay_HRTEM(){
                                                                                Qt::KeepAspectRatio)));
     }
 }
-
+//
 void PRISMMainWindow::updateProbeImages(){
     updateProbeR_PRISMDisplay();
     updateProbeK_PRISMDisplay();
