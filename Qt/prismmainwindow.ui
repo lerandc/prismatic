@@ -51,7 +51,7 @@
             <item>
              <widget class="QTabWidget" name="tabWidget">
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="stem_sim">
                <attribute name="title">
@@ -1380,7 +1380,7 @@
                 <item>
                  <widget class="QTabWidget" name="tabWidget_3">
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>2</number>
                   </property>
                   <widget class="QWidget" name="tab_sample_2">
                    <attribute name="title">
@@ -1812,19 +1812,6 @@
                         </property>
                        </widget>
                       </item>
-                      <item row="3" column="2">
-                       <widget class="QSlider" name="slider_bothDetectors_2">
-                        <property name="enabled">
-                         <bool>false</bool>
-                        </property>
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="tickPosition">
-                         <enum>QSlider::NoTicks</enum>
-                        </property>
-                       </widget>
-                      </item>
                       <item row="1" column="1">
                        <widget class="QLineEdit" name="lineEdit_angmin_2">
                         <property name="enabled">
@@ -1872,22 +1859,6 @@
                         </property>
                         <property name="text">
                          <string>Radius</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="3" column="0" colspan="2">
-                       <widget class="QLabel" name="label_71">
-                        <property name="font">
-                         <font>
-                          <family>Arial</family>
-                          <italic>true</italic>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>grab both</string>
-                        </property>
-                        <property name="alignment">
-                         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                         </property>
                        </widget>
                       </item>
