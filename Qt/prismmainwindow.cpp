@@ -261,13 +261,19 @@ PRISMMainWindow::PRISMMainWindow(QWidget* parent) :
     connect(this->ui->btn_go_hrtem, SIGNAL(clicked(bool)), this, SLOT(calculateAllHRTEM()));
     connect(this->ui->lineEdit_slicemin, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits()));
     connect(this->ui->lineEdit_slicemax, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits()));
+    connect(this->ui->lineEdit_slicemin_2, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits_2()));
+    connect(this->ui->lineEdit_slicemax_2, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits_2()));
     connect(this->ui->slider_bothSlices, SIGNAL(valueChanged(int)), this, SLOT(moveBothPotentialSliders(int)));
-    connect(this->ui->slider_bothDetectors, SIGNAL(valueChanged(int)), this, SLOT(moveBothDetectorSliders(int)));
-    //    connect(this->ui->slider_slicemin,                 SIGNAL(valueChanged(int)),        this, SLOT(updateSlider_PotentialCombo(int)));
+    connect(this->ui->slider_bothSlices_2, SIGNAL(valueChanged(int)), this, SLOT(moveBothPotentialSliders(int)));
     connect(this->ui->slider_slicemin, SIGNAL(valueChanged(int)), this, SLOT(updateSlider_lineEdits_min(int)));
     connect(this->ui->slider_slicemax, SIGNAL(valueChanged(int)), this, SLOT(updateSlider_lineEdits_max(int)));
     connect(this->ui->slider_slicemin, SIGNAL(valueChanged(int)), this, SLOT(updatePotentialFloatImage()));
     connect(this->ui->slider_slicemax, SIGNAL(valueChanged(int)), this, SLOT(updatePotentialFloatImage()));
+    connect(this->ui->slider_slicemin, SIGNAL(valueChanged(int)), this, SLOT(linkPotentialSliders_1_to_2()));
+    connect(this->ui->slider_slicemax, SIGNAL(valueChanged(int)), this, SLOT(linkPotentialSliders_1_to_2()));
+    connect(this->ui->slider_slicemin_2, SIGNAL(valueChanged(int)), this, SLOT(linkPotentialSliders_2_to_1()));
+    connect(this->ui->slider_slicemax_2, SIGNAL(valueChanged(int)), this, SLOT(linkPotentialSliders_2_to_1()));
+    connect(this->ui->slider_bothDetectors, SIGNAL(valueChanged(int)), this, SLOT(moveBothDetectorSliders(int)));
     connect(this->ui->slider_angmin, SIGNAL(valueChanged(int)), this, SLOT(updateSlider_lineEdits_min_ang(int)));
     connect(this->ui->slider_angmax, SIGNAL(valueChanged(int)), this, SLOT(updateSlider_lineEdits_max_ang(int)));
     connect(this->ui->slider_angmin, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage()));
@@ -282,6 +288,8 @@ PRISMMainWindow::PRISMMainWindow(QWidget* parent) :
     connect(this->ui->lineEdit_angmax, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits_ang()));
     connect(this->ui->lineEdit_contrast_outputMin, SIGNAL(editingFinished()), this, SLOT(updateContrastAngMin()));
     connect(this->ui->lineEdit_contrast_outputMax, SIGNAL(editingFinished()), this, SLOT(updateContrastAngMax()));
+    connect(this->ui->lineEdit_contrast_outputMin_2, SIGNAL(editingFinished()), this, SLOT(updateContrastHRTEM_min()));
+    connect(this->ui->lineEdit_contrast_outputMax_2, SIGNAL(editingFinished()), this, SLOT(updateContrastHRTEM_max()));
     connect(this->ui->lineEdit_contrastPotMin, SIGNAL(editingFinished()), this, SLOT(updateContrastPotMin()));
     connect(this->ui->lineEdit_contrastPotMax, SIGNAL(editingFinished()), this, SLOT(updateContrastPotMax()));
     connect(this->ui->tabWidget_2, SIGNAL(currentChanged(int)), this, SLOT(redrawImages()));
@@ -1466,6 +1474,23 @@ void PRISMMainWindow::calculateProbe(){
     }
 }
 
+void PRISMMainWindow::linkPotentialSliders_1_to_2(){
+    this->ui->slider_slicemin_2->setValue(this->ui->slider_slicemin->value());
+    this->ui->slider_slicemax_2->setValue(this->ui->slider_slicemax->value());
+    // this->ui->slider_bothSlices_2->setValue(this->ui->slider_bothSlices->value());
+}
+
+void PRISMMainWindow::linkPotentialSliders_2_to_1(){
+    this->ui->slider_slicemin->setValue(this->ui->slider_slicemin_2->value());
+    this->ui->slider_slicemax->setValue(this->ui->slider_slicemax_2->value());
+    // this->ui->slider_bothSlices->setValue(this->ui->slider_bothSlices_2->value());
+
+    // add the rest of the slots here so that they occur in the right order
+    updatePotentialFloatImage();
+    updateSlider_lineEdits_min(this->ui->slider_slicemin_2->value());
+    updateSlider_lineEdits_max(this->ui->slider_slicemax_2->value());
+}
+
 void PRISMMainWindow::updatePotentialImage(){
     if (checkpotentialArrayExists()){
             {
@@ -1483,6 +1508,15 @@ void PRISMMainWindow::updatePotentialImage(){
             this->ui->slider_slicemin->setMaximum(potential.get_dimk());
             this->ui->slider_slicemax->setMaximum(potential.get_dimk());
             this->ui->slider_bothSlices->setMaximum(potential.get_dimk());
+
+            this->ui->slider_slicemin_2->setMinimum(1);
+            this->ui->slider_slicemax_2->setMinimum(1);
+            this->ui->slider_bothSlices_2->setMinimum(1);
+            this->ui->slider_slicemin_2->setValue(1);
+            this->ui->slider_bothSlices_2->setValue(1);
+            this->ui->slider_slicemin_2->setMaximum(potential.get_dimk());
+            this->ui->slider_slicemax_2->setMaximum(potential.get_dimk());
+            this->ui->slider_bothSlices_2->setMaximum(potential.get_dimk());
 
             updatePotentialFloatImage();
         }
@@ -2045,7 +2079,28 @@ void PRISMMainWindow::updateSliders_fromLineEdits(){
     this->ui->slider_bothSlices->setValue(this->ui->slider_slicemin->value());
     this->ui->slider_slicemax->setValue(std::max(this->ui->lineEdit_slicemax->text().toInt(),
                                                  this->ui->slider_slicemin->value()));
+
+    this->ui->slider_slicemin_2->setValue(std::min(this->ui->lineEdit_slicemin->text().toInt(),
+                                                 this->ui->slider_slicemax->value()));
+    this->ui->slider_bothSlices_2->setValue(this->ui->slider_slicemin->value());
+    this->ui->slider_slicemax_2->setValue(std::max(this->ui->lineEdit_slicemax->text().toInt(),
+                                                 this->ui->slider_slicemin->value()));
 }
+
+void PRISMMainWindow::updateSliders_fromLineEdits_2(){
+    this->ui->slider_slicemin->setValue(std::min(this->ui->lineEdit_slicemin_2->text().toInt(),
+                                                 this->ui->slider_slicemax->value()));
+    this->ui->slider_bothSlices->setValue(this->ui->slider_slicemin->value());
+    this->ui->slider_slicemax->setValue(std::max(this->ui->lineEdit_slicemax_2->text().toInt(),
+                                                 this->ui->slider_slicemin->value()));
+
+    this->ui->slider_slicemin_2->setValue(std::min(this->ui->lineEdit_slicemin_2->text().toInt(),
+                                                 this->ui->slider_slicemax->value()));
+    this->ui->slider_bothSlices_2->setValue(this->ui->slider_slicemin->value());
+    this->ui->slider_slicemax_2->setValue(std::max(this->ui->lineEdit_slicemax_2->text().toInt(),
+                                                 this->ui->slider_slicemin->value()));
+}
+
 void PRISMMainWindow::updateSliders_fromLineEdits_ang(){
 //    if (outputReady){
     if (checkoutputArrayExists()){
@@ -2133,7 +2188,7 @@ void PRISMMainWindow::updateSlider_lineEdits_HRTEM_ang(int val){
 
     if (checkoutputArrayExists_HRTEM()){
         double scaled_val = val * (2.0*std::acos(-1)/100);
-        this->ui->lineEdit_angmax->setText(QString::number(scaled_val));
+        this->ui->lineEdit_angmax_2->setText(QString::number(scaled_val));
     }
 }
 
@@ -2165,6 +2220,18 @@ void PRISMMainWindow::updateContrastAngMax(){
     bool flag = false;
     contrast_outputMax = (PRISMATIC_FLOAT_PRECISION)ui->lineEdit_contrast_outputMax->text().toDouble(&flag);
     if (flag)updateOutputDisplay();
+}
+
+void PRISMMainWindow::updateContrastHRTEM_min(){
+    bool flag = false;
+    contrast_outputMin = (PRISMATIC_FLOAT_PRECISION)ui->lineEdit_contrast_outputMin_2->text().toDouble(&flag);
+    if (flag)updateOutputDisplay_HRTEM();
+}
+
+void PRISMMainWindow::updateContrastHRTEM_max(){
+    bool flag = false;
+    contrast_outputMax = (PRISMATIC_FLOAT_PRECISION)ui->lineEdit_contrast_outputMax_2->text().toDouble(&flag);
+    if (flag)updateOutputDisplay_HRTEM();
 }
 
 void PRISMMainWindow::updateAlphaMax(){
@@ -2653,8 +2720,11 @@ void PRISMMainWindow::moveBothPotentialSliders(int val){
     if (val + difference <= ui->slider_slicemax->maximum()){
         ui->slider_slicemax->setValue(val + difference);
         ui->slider_slicemin->setValue(val);
+        ui->slider_slicemax_2->setValue(val + difference);
+        ui->slider_slicemin_2->setValue(val);
     }
     ui->slider_bothSlices->setValue(ui->slider_slicemin->value());
+    ui->slider_bothSlices_2->setValue(ui->slider_slicemin->value());
 }
 
 void PRISMMainWindow::moveBothDetectorSliders(int val){

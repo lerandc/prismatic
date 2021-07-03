@@ -104,6 +104,8 @@ public slots:
     void calculateAll();
     void calculateAllHRTEM();
     void calculateProbe();
+    void linkPotentialSliders_1_to_2();
+    void linkPotentialSliders_2_to_1();
     void updatePotentialImage();
     void updatePotentialDisplay();
     void updatePotentialFloatImage();
@@ -115,12 +117,15 @@ public slots:
     void updateOutputDisplay_HRTEM();
     void updateOutputFloatImage_HRTEM();
     void updateSliders_fromLineEdits();
+    void updateSliders_fromLineEdits_2();
     void updateSliders_fromLineEdits_ang();
     void updateSliders_fromLineEdits_HRTEM();
     void updateContrastPotMin();
     void updateContrastPotMax();
     void updateContrastAngMin();
     void updateContrastAngMax();
+    void updateContrastHRTEM_min();
+    void updateContrastHRTEM_max();
     void updateSlider_lineEdits_min(int);
     void updateSlider_lineEdits_max(int);
     void updateSlider_lineEdits_max_ang(int val);
