@@ -274,6 +274,8 @@ PRISMMainWindow::PRISMMainWindow(QWidget* parent) :
     connect(this->ui->slider_angmax, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage()));
     connect(this->ui->slider_angmin_2, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage_HRTEM()));
     connect(this->ui->slider_angmax_2, SIGNAL(valueChanged(int)), this, SLOT(updateOutputFloatImage_HRTEM()));
+    connect(this->ui->slider_angmin_2, SIGNAL(valueChanged(int)), this, SLOT(updateSlider_lineEdits_HRTEM_rad(int)));
+    connect(this->ui->slider_angmax_2, SIGNAL(valueChanged(int)), this, SLOT(updateSlider_lineEdits_HRTEM_ang(int)));
     connect(this->ui->radBtn_HRTEM_amp, SIGNAL(clicked(bool)), this, SLOT(updateOutputFloatImage_HRTEM()));
     connect(this->ui->radBtn_HRTEM_phase, SIGNAL(clicked(bool)), this, SLOT(updateOutputFloatImage_HRTEM()));
     connect(this->ui->lineEdit_angmin, SIGNAL(editingFinished()), this, SLOT(updateSliders_fromLineEdits_ang()));
@@ -2065,6 +2067,26 @@ void PRISMMainWindow::updateSliders_fromLineEdits_ang(){
     }
 }
 
+void PRISMMainWindow::updateSliders_fromLineEdits_HRTEM(){
+//    if (outputReady){
+    if (checkoutputArrayExists_HRTEM()){
+        bool flagMin = false;
+        bool flagMax = false;
+        PRISMATIC_FLOAT_PRECISION minval = ( (PRISMATIC_FLOAT_PRECISION)this->ui->lineEdit_angmin_2->text().toDouble(&flagMin)) /
+        (HRTEM_beam_max_rad);
+        PRISMATIC_FLOAT_PRECISION maxval = ( (PRISMATIC_FLOAT_PRECISION)this->ui->lineEdit_angmax_2->text().toDouble(&flagMax)) /
+        (2.0*std::acos(-1));
+        if (flagMin & flagMax){
+            this->ui->slider_angmin_2->setValue(std::min( (int)std::round(minval),
+                                                         this->ui->slider_angmax_2->value()));
+            this->ui->slider_angmax_2->setValue(std::max( (int)std::round(maxval) - 1,
+                                                         this->ui->slider_angmin_2->value()));
+            updateSlider_lineEdits_HRTEM_ang(this->ui->slider_angmax_2->value());
+            updateSlider_lineEdits_HRTEM_rad(this->ui->slider_angmin_2->value());
+        }
+    }
+}
+
 void PRISMMainWindow::updateSlider_lineEdits_min(int val){
     if (val <= this->ui->slider_slicemax->value()){
         this->ui->lineEdit_slicemin->setText(QString::number(val));
@@ -2088,7 +2110,7 @@ void PRISMMainWindow::updateSlider_lineEdits_max_ang(int val){
     if (checkoutputArrayExists()){
         if (val >= this->ui->slider_angmin->value()){
             double scaled_val = detectorAngles[0] + val * (detectorAngles[1] - detectorAngles[0]) + (detectorAngles[1] - detectorAngles[0])/2;
-            this->ui->lineEdit_angmax->setText(QString::number(scaled_val));
+            this->ui->lineEdit_angmax->setText(QString::number(scaled_val/1000));
         } else {
             this->ui->slider_angmax->setValue(this->ui->slider_angmin->value());
         }        
@@ -2099,11 +2121,26 @@ void PRISMMainWindow::updateSlider_lineEdits_min_ang(int val){
     if (checkoutputArrayExists()){
         if (val <= this->ui->slider_angmax->value()){
             double scaled_val = detectorAngles[0] + val * (detectorAngles[1] - detectorAngles[0]) - (detectorAngles[1] - detectorAngles[0])/2;
-            this->ui->lineEdit_angmin->setText(QString::number(scaled_val));
+            this->ui->lineEdit_angmin->setText(QString::number(scaled_val/1000));
         } else {
             this->ui->slider_angmin->setValue(this->ui->slider_angmax->value());
         }
         this->ui->slider_bothDetectors->setValue(this->ui->slider_angmin->value());
+    }
+}
+
+void PRISMMainWindow::updateSlider_lineEdits_HRTEM_ang(int val){
+
+    if (checkoutputArrayExists_HRTEM()){
+        double scaled_val = val * (2.0*std::acos(-1)/100);
+        this->ui->lineEdit_angmax->setText(QString::number(scaled_val));
+    }
+}
+
+void PRISMMainWindow::updateSlider_lineEdits_HRTEM_rad(int val){
+    if (checkoutputArrayExists_HRTEM()){
+        double scaled_val = val * (HRTEM_beam_max_rad/100);
+        this->ui->lineEdit_angmin_2->setText(QString::number(scaled_val));
     }
 }
 

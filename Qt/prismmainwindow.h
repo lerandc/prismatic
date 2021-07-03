@@ -116,6 +116,7 @@ public slots:
     void updateOutputFloatImage_HRTEM();
     void updateSliders_fromLineEdits();
     void updateSliders_fromLineEdits_ang();
+    void updateSliders_fromLineEdits_HRTEM();
     void updateContrastPotMin();
     void updateContrastPotMax();
     void updateContrastAngMin();
@@ -124,6 +125,8 @@ public slots:
     void updateSlider_lineEdits_max(int);
     void updateSlider_lineEdits_max_ang(int val);
     void updateSlider_lineEdits_min_ang(int val);
+    void updateSlider_lineEdits_HRTEM_ang(int val);
+    void updateSlider_lineEdits_HRTEM_rad(int val);
     void updateAlphaMax();
     void resizeEvent(QResizeEvent *event);
     void redrawImages();
