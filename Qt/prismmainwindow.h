@@ -122,6 +122,8 @@ public slots:
     void updateSliders_fromLineEdits_HRTEM();
     void updateContrastPotMin();
     void updateContrastPotMax();
+    void updateContrastPotMin_2();
+    void updateContrastPotMax_2();
     void updateContrastAngMin();
     void updateContrastAngMax();
     void updateContrastHRTEM_min();

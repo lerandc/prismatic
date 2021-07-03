@@ -292,6 +292,9 @@ PRISMMainWindow::PRISMMainWindow(QWidget* parent) :
     connect(this->ui->lineEdit_contrast_outputMax_2, SIGNAL(editingFinished()), this, SLOT(updateContrastHRTEM_max()));
     connect(this->ui->lineEdit_contrastPotMin, SIGNAL(editingFinished()), this, SLOT(updateContrastPotMin()));
     connect(this->ui->lineEdit_contrastPotMax, SIGNAL(editingFinished()), this, SLOT(updateContrastPotMax()));
+    connect(this->ui->lineEdit_contrastPotMin_2, SIGNAL(editingFinished()), this, SLOT(updateContrastPotMin_2()));
+    connect(this->ui->lineEdit_contrastPotMax_2, SIGNAL(editingFinished()), this, SLOT(updateContrastPotMax_2()));
+
     connect(this->ui->tabWidget_2, SIGNAL(currentChanged(int)), this, SLOT(redrawImages()));
     connect(this->ui->tabWidget_3, SIGNAL(currentChanged(int)), this, SLOT(redrawImages()));
     connect(this->ui->btn_saveOutputImage, SIGNAL(clicked(bool)), this, SLOT(saveCurrentOutputImage()));
@@ -315,7 +318,7 @@ PRISMMainWindow::PRISMMainWindow(QWidget* parent) :
    // connect(this->ui->checkBox_occupancy, SIGNAL(toggled(bool)), this, SLOT(toggleOccupancy()));
     connect(this->ui->checkBox_NQS, SIGNAL(toggled(bool)), this, SLOT(toggleNyquist()));
     connect(this->ui->checkBox_sqrtIntensityPot, SIGNAL(toggled(bool)), this, SLOT(updatePotentialFloatImage()));
-    connect(this->ui->checkBox_sqrtIntensityPot_2, SIGNAL(toggled(bool)), this, SLOT(updatePotentialFloatImage()));
+    connect(this->ui->checkBox_sqrtIntensityPot_2, SIGNAL(toggled(bool)), this, SLOT(linkPotentialSliders_2_to_1()));
     connect(this->ui->checkBox_log, SIGNAL(toggled(bool)), this, SLOT(updateProbeImages()));
     connect(this->ui->comboBox_colormap, SIGNAL(currentTextChanged(QString)), this, SLOT(changeColormap(QString)));
     connect(this->ui->comboBox_colormap,               SIGNAL(currentTextChanged(QString)), this, SLOT(updatePotentialFloatImage()));
@@ -1478,11 +1481,13 @@ void PRISMMainWindow::linkPotentialSliders_1_to_2(){
     this->ui->slider_slicemin_2->setValue(this->ui->slider_slicemin->value());
     this->ui->slider_slicemax_2->setValue(this->ui->slider_slicemax->value());
     // this->ui->slider_bothSlices_2->setValue(this->ui->slider_bothSlices->value());
+    this->ui->checkBox_sqrtIntensityPot_2->setChecked(this->ui->checkBox_sqrtIntensityPot()->isChecked());
 }
 
 void PRISMMainWindow::linkPotentialSliders_2_to_1(){
     this->ui->slider_slicemin->setValue(this->ui->slider_slicemin_2->value());
     this->ui->slider_slicemax->setValue(this->ui->slider_slicemax_2->value());
+    this->ui->checkBox_sqrtIntensityPot->setChecked(this->ui->checkBox_sqrtIntensityPot_2()->isChecked());
     // this->ui->slider_bothSlices->setValue(this->ui->slider_bothSlices_2->value());
 
     // add the rest of the slots here so that they occur in the right order
@@ -1555,6 +1560,8 @@ void PRISMMainWindow::updatePotentialFloatImage(){
         }
         ui->lineEdit_contrastPotMin->setText(QString::number(contrast_potentialMin));
         ui->lineEdit_contrastPotMax->setText(QString::number(contrast_potentialMax));
+        ui->lineEdit_contrastPotMin_2->setText(QString::number(contrast_potentialMin));
+        ui->lineEdit_contrastPotMax_2->setText(QString::number(contrast_potentialMax));
     }
     updatePotentialDisplay();
 }
@@ -2145,6 +2152,7 @@ void PRISMMainWindow::updateSliders_fromLineEdits_HRTEM(){
 void PRISMMainWindow::updateSlider_lineEdits_min(int val){
     if (val <= this->ui->slider_slicemax->value()){
         this->ui->lineEdit_slicemin->setText(QString::number(val));
+        this->ui->lineEdit_slicemin_2->setText(QString::number(val));
     } else {
         this->ui->slider_slicemin->setValue(this->ui->slider_slicemax->value());
     }
@@ -2155,6 +2163,7 @@ void PRISMMainWindow::updateSlider_lineEdits_min(int val){
 void PRISMMainWindow::updateSlider_lineEdits_max(int val){
     if (val >= this->ui->slider_slicemin->value()){
         this->ui->lineEdit_slicemax->setText(QString::number(val));
+        this->ui->lineEdit_slicemax_2->setText(QString::number(val));
     } else {
         this->ui->slider_slicemax->setValue(this->ui->slider_slicemin->value());
     }
@@ -2203,12 +2212,25 @@ void PRISMMainWindow::updateSlider_lineEdits_HRTEM_rad(int val){
 void PRISMMainWindow::updateContrastPotMin(){
     bool flag = false;
     contrast_potentialMin = (PRISMATIC_FLOAT_PRECISION)ui->lineEdit_contrastPotMin->text().toDouble(&flag);
+    this->ui->lineEdit_contrastPotMin_2->setText(this->ui->lineEdit_contrstPotMin->text());
     if (flag)updatePotentialDisplay();
 }
+
 void PRISMMainWindow::updateContrastPotMax(){
     bool flag = false;
     contrast_potentialMax = (PRISMATIC_FLOAT_PRECISION)ui->lineEdit_contrastPotMax->text().toDouble(&flag);
+    this->ui->lineEdit_contrastPotMax_2->setText(this->ui->lineEdit_contrstPotMax->text());
     if (flag)updatePotentialDisplay();
+}
+
+void PRISMMainWindow::updateContrastPotMin_2(){
+    this->ui->lineEdit_contrastPotMin->setText(this->ui->lineEdit_contrstPotMin_2->text());
+    updateContrastPotMin();
+}
+
+void PRISMMainWindow::updateContrastPotMax_2(){
+    this->ui->lineEdit_contrastPotMax->setText(this->ui->lineEdit_contrstPotMax_2->text());
+    updateContrastPotMax();
 }
 
 void PRISMMainWindow::updateContrastAngMin(){
